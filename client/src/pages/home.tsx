@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { ArrowRight, ShoppingBag, Package2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product-card";
 import { useProducts } from "@/hooks/use-products";
