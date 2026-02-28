@@ -155,6 +155,14 @@ export async function registerRoutes(
         items: itemsWithPrice
       });
       
+      // Log purchase analytics
+      await storage.logVisit({
+        page: "/checkout",
+        action: "purchase",
+        metadata: JSON.stringify({ orderId: order.id, totalAmount }),
+        userId
+      });
+      
       res.status(201).json(order);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -165,6 +173,40 @@ export async function registerRoutes(
       }
       console.error(err);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Analytics routes
+  app.post(api.analytics.log.path, async (req: any, res) => {
+    try {
+      const input = api.analytics.log.input.parse(req.body);
+      await storage.logVisit({
+        ...input,
+        userId: req.user?.claims?.sub || null,
+      });
+      res.status(204).end();
+    } catch (e) {
+      res.status(400).end();
+    }
+  });
+
+  app.get(api.analytics.stats.path, async (req, res) => {
+    try {
+      const stats = await storage.getSalesStats();
+      res.json(stats);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // Profile update
+  app.patch("/api/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.updateUser(userId, req.body);
+      res.json(user);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

@@ -57,6 +57,11 @@ async function upsertUser(claims: any) {
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    // Initialize extra fields as null or empty if they don't exist in claims
+    phone: claims["phone"] || null,
+    address: claims["address"] || null,
+    city: claims["city"] || null,
+    birthDate: claims["birth_date"] || null,
   });
 }
 

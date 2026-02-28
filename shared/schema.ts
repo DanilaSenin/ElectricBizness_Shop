@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -33,6 +33,15 @@ export const orderItems = pgTable("order_items", {
   priceAtTime: integer("price_at_time").notNull(), // stored in cents
 });
 
+export const analytics = pgTable("analytics", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"), // null for anonymous
+  page: text("page").notNull(),
+  action: text("action"), // 'view', 'click', 'purchase'
+  metadata: text("metadata"), // JSON string or extra info
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 export const productsRelations = relations(products, ({ many }) => ({
   orderItems: many(orderItems),
 }));
@@ -59,6 +68,7 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
+export const insertAnalyticsSchema = createInsertSchema(analytics).omit({ id: true, timestamp: true });
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -68,6 +78,9 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+
+export type Analytics = typeof analytics.$inferSelect;
+export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;
 
 // Request Types
 export type CartItemRequest = {
@@ -80,3 +93,10 @@ export type CheckoutRequest = {
 
 export type ProductResponse = Product;
 export type OrderResponse = Order & { items: (OrderItem & { product: Product })[] };
+
+export type SalesStatsResponse = {
+  totalSales: number;
+  orderCount: number;
+  byCategory: { category: string; amount: number }[];
+  byStatus: { status: string; count: number }[];
+};

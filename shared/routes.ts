@@ -103,6 +103,32 @@ export const api = {
       },
     },
   },
+  analytics: {
+    log: {
+      method: 'POST' as const,
+      path: '/api/analytics' as const,
+      input: z.object({
+        page: z.string(),
+        action: z.string().optional(),
+        metadata: z.string().optional(),
+      }),
+      responses: {
+        204: z.void(),
+      },
+    },
+    stats: {
+      method: 'GET' as const,
+      path: '/api/analytics/stats' as const,
+      responses: {
+        200: z.object({
+          totalSales: z.number(),
+          orderCount: z.number(),
+          byCategory: z.array(z.object({ category: z.string(), amount: z.number() })),
+          byStatus: z.array(z.object({ status: z.string(), count: z.number() })),
+        }),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {

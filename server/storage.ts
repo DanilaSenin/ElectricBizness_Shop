@@ -3,13 +3,19 @@ import {
   products,
   orders,
   orderItems,
+  analytics,
+  users,
   type InsertProduct,
   type InsertOrder,
   type InsertOrderItem,
   type ProductResponse,
-  type OrderResponse
+  type OrderResponse,
+  type InsertAnalytics,
+  type SalesStatsResponse,
+  type UpsertUser,
+  type User
 } from "@shared/schema";
-import { eq, desc, asc, like, ilike, and } from "drizzle-orm";
+import { eq, desc, asc, ilike, and } from "drizzle-orm";
 
 export interface IStorage {
   // Products
@@ -21,6 +27,13 @@ export interface IStorage {
   getOrdersByUser(userId: string): Promise<OrderResponse[]>;
   getOrder(id: number): Promise<OrderResponse | undefined>;
   createOrder(userId: string, orderData: { totalAmount: number, status: string, items: { productId: number, quantity: number, priceAtTime: number }[] }): Promise<OrderResponse>;
+
+  // Analytics
+  logVisit(data: InsertAnalytics): Promise<void>;
+  getSalesStats(): Promise<SalesStatsResponse>;
+  
+  // User Profile
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -36,7 +49,6 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (conditions.length > 0) {
-      // Create a single condition combining all filters
       let combinedCondition = conditions[0];
       for (let i = 1; i < conditions.length; i++) {
         combinedCondition = and(combinedCondition, conditions[i]) as any;
@@ -48,7 +60,7 @@ export class DatabaseStorage implements IStorage {
       query = query.orderBy(asc(products.price)) as any;
     } else if (sortBy === 'price_desc') {
       query = query.orderBy(desc(products.price)) as any;
-    } else { // newest
+    } else {
       query = query.orderBy(desc(products.createdAt)) as any;
     }
 
@@ -106,7 +118,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(userId: string, orderData: { totalAmount: number, status: string, items: { productId: number, quantity: number, priceAtTime: number }[] }): Promise<OrderResponse> {
-    // Need a transaction for creating order and items
     return await db.transaction(async (tx) => {
       const [order] = await tx.insert(orders).values({
         userId,
@@ -123,7 +134,6 @@ export class DatabaseStorage implements IStorage {
       
       await tx.insert(orderItems).values(itemsToInsert);
       
-      // Fetch the created order with items to return
       const items = await tx.select({
         id: orderItems.id,
         orderId: orderItems.orderId,
@@ -137,6 +147,43 @@ export class DatabaseStorage implements IStorage {
         
       return { ...order, items } as OrderResponse;
     });
+  }
+
+  async logVisit(data: InsertAnalytics): Promise<void> {
+    await db.insert(analytics).values(data);
+  }
+
+  async getSalesStats(): Promise<SalesStatsResponse> {
+    const allOrders = await db.select().from(orders);
+    const totalSales = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    
+    const byStatus: Record<string, number> = {};
+    allOrders.forEach(o => {
+      byStatus[o.status] = (byStatus[o.status] || 0) + 1;
+    });
+
+    const allOrderItems = await db.select({
+      amount: orderItems.priceAtTime,
+      quantity: orderItems.quantity,
+      category: products.category
+    }).from(orderItems).innerJoin(products, eq(orderItems.productId, products.id));
+
+    const byCategory: Record<string, number> = {};
+    allOrderItems.forEach(item => {
+      byCategory[item.category] = (byCategory[item.category] || 0) + (item.amount * item.quantity);
+    });
+
+    return {
+      totalSales,
+      orderCount: allOrders.length,
+      byCategory: Object.entries(byCategory).map(([category, amount]) => ({ category, amount })),
+      byStatus: Object.entries(byStatus).map(([status, count]) => ({ status, count }))
+    };
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db.update(users).set({ ...userData, updatedAt: new Date() }).where(eq(users.id, id)).returning();
+    return user;
   }
 }
 

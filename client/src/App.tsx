@@ -13,7 +13,10 @@ import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import Profile from "@/pages/profile";
 
+import { useAnalytics } from "@/hooks/use-analytics";
+
 function Router() {
+  useAnalytics();
   return (
     <Layout>
       <Switch>
