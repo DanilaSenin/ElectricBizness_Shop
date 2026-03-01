@@ -40,10 +40,15 @@ export default function Profile() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      setLocation("/");
-      window.location.href = "/api/login";
+      // Small delay to prevent redirect loops during initial load
+      const timer = setTimeout(() => {
+        if (!isAuthenticated) {
+          window.location.assign("/api/login");
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, authLoading, setLocation]);
+  }, [isAuthenticated, authLoading]);
 
   const onUpdateProfile = async (data: any) => {
     setIsUpdating(true);
@@ -58,11 +63,28 @@ export default function Profile() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-4xl space-y-8">
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-24 text-center">
+        <div className="max-w-md mx-auto space-y-6">
+          <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+            <UserIcon className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold">Личный кабинет</h1>
+          <p className="text-muted-foreground">Для просмотра профиля и истории заказов необходимо авторизоваться</p>
+          <Button size="lg" className="w-full rounded-full" onClick={() => window.location.href = "/api/login"}>
+            Войти через Replit
+          </Button>
+        </div>
       </div>
     );
   }

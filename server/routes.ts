@@ -203,9 +203,11 @@ export async function registerRoutes(
   app.patch("/api/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.updateUser(userId, req.body);
+      // Use authStorage for user updates to ensure it hits the correct table
+      const user = await authStorage.updateUser(userId, req.body);
       res.json(user);
     } catch (e) {
+      console.error("Profile update error:", e);
       res.status(500).json({ message: "Failed to update profile" });
     }
   });

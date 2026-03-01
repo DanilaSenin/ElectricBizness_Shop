@@ -71,6 +71,7 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Move user endpoint to routes.ts but ensure it's registered after setupAuth
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -106,6 +107,14 @@ export async function setupAuth(app: Express) {
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+
+  app.get("/api/auth/login", (req, res, next) => {
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      prompt: "login consent",
+      scope: ["openid", "email", "profile", "offline_access"],
+    })(req, res, next);
+  });
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req.hostname);
