@@ -17,7 +17,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@shared/routes";
-import { Layout } from "@/components/layout";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -40,15 +39,9 @@ export default function Profile() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      // Small delay to prevent redirect loops during initial load
-      const timer = setTimeout(() => {
-        if (!isAuthenticated) {
-          window.location.assign("/api/login");
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+      setLocation("/auth");
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, setLocation]);
 
   const onUpdateProfile = async (data: any) => {
     setIsUpdating(true);
@@ -63,6 +56,11 @@ export default function Profile() {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
+  };
+
   if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-4xl space-y-8">
@@ -72,22 +70,7 @@ export default function Profile() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-24 text-center">
-        <div className="max-w-md mx-auto space-y-6">
-          <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-            <UserIcon className="h-10 w-10 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold">Личный кабинет</h1>
-          <p className="text-muted-foreground">Для просмотра профиля и истории заказов необходимо авторизоваться</p>
-          <Button size="lg" className="w-full rounded-full" onClick={() => window.location.href = "/api/login"}>
-            Войти через Replit
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -108,20 +91,20 @@ export default function Profile() {
               {user.profileImageUrl ? (
                 <img src={user.profileImageUrl} alt={user.firstName || 'User'} className="w-full h-full object-cover" />
               ) : (
-                (user.firstName?.[0] || user.email?.[0] || 'U').toUpperCase()
+                (user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()
               )}
             </div>
             <div>
               <h1 className="font-display text-3xl font-bold">
                 {user.firstName} {user.lastName}
               </h1>
-              <p className="text-primary-foreground/70 mt-1">{user.email}</p>
+              <p className="text-primary-foreground/70 mt-1">@{user.username}</p>
             </div>
           </div>
           <Button 
             variant="outline" 
             className="bg-transparent border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
-            onClick={() => logout()}
+            onClick={handleLogout}
             disabled={isLoggingOut}
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -136,7 +119,7 @@ export default function Profile() {
             <Card className="rounded-3xl shadow-xl border-border/50">
               <CardHeader>
                 <CardTitle>Данные пользователя</CardTitle>
-                <CardDescription>Минимум 5-7 полей информации</CardDescription>
+                <CardDescription>Редактирование профиля</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={form.handleSubmit(onUpdateProfile)} className="space-y-4">
@@ -163,7 +146,7 @@ export default function Profile() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="birthDate">Дата рождения</Label>
-                      <Input id="birthDate" type="date" {...form.register("birthDate")} />
+                      <Input id="birthDate" {...form.register("birthDate")} />
                     </div>
                   </div>
                   <Button type="submit" className="w-full rounded-xl" disabled={isUpdating}>

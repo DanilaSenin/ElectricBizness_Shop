@@ -12,6 +12,7 @@ import ProductDetails from "@/pages/product-details";
 import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import Profile from "@/pages/profile";
+import AuthPage from "@/pages/auth-page";
 
 import { useAnalytics } from "@/hooks/use-analytics";
 
@@ -26,6 +27,7 @@ function Router() {
         <Route path="/cart" component={Cart} />
         <Route path="/checkout" component={Checkout} />
         <Route path="/profile" component={Profile} />
+        <Route path="/auth" component={AuthPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
