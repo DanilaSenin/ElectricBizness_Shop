@@ -92,7 +92,7 @@ export async function registerRoutes(
 
   app.get(api.orders.list.path, isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       const orders = await storage.getOrdersByUser(userId);
       res.json(orders);
     } catch (e) {
@@ -103,7 +103,7 @@ export async function registerRoutes(
   app.get(api.orders.get.path, isAuthenticated, async (req: any, res) => {
     try {
       const order = await storage.getOrder(Number(req.params.id));
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -121,7 +121,7 @@ export async function registerRoutes(
 
   app.post(api.orders.create.path, isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       const input = api.orders.create.input.parse(req.body);
       
       if (!input.items || input.items.length === 0) {
@@ -182,7 +182,7 @@ export async function registerRoutes(
       const input = api.analytics.log.input.parse(req.body);
       await storage.logVisit({
         ...input,
-        userId: req.user?.claims?.sub || null,
+        userId: (req.session as any)?.userId || null,
       });
       res.status(204).end();
     } catch (e) {
@@ -202,8 +202,9 @@ export async function registerRoutes(
   // Profile update
   app.patch("/api/user", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       // Use authStorage for user updates to ensure it hits the correct table
+      const { authStorage } = await import("./replit_integrations/auth/storage");
       const user = await authStorage.updateUser(userId, req.body);
       res.json(user);
     } catch (e) {

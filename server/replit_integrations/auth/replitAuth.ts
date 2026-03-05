@@ -28,37 +28,47 @@ export function setupAuth(app: Express) {
 
   // Login route
   app.post("/api/login", async (req, res) => {
-    const { username, password } = req.body;
-    const user = await authStorage.getUserByUsername(username);
-    
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: "Неверное имя пользователя или пароль" });
-    }
+    try {
+      const { username, password } = req.body;
+      const user = await authStorage.getUserByUsername(username);
+      
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Неверное имя пользователя или пароль" });
+      }
 
-    (req.session as any).userId = user.id;
-    res.json(user);
+      (req.session as any).userId = user.id;
+      res.json(user);
+    } catch (e) {
+      console.error("Login error:", e);
+      res.status(500).json({ message: "Ошибка сервера при входе" });
+    }
   });
 
   // Register route
   app.post("/api/register", async (req, res) => {
-    const { username, password, email, firstName, lastName } = req.body;
-    
-    const existing = await authStorage.getUserByUsername(username);
-    if (existing) {
-      return res.status(400).json({ message: "Пользователь уже существует" });
+    try {
+      const { username, password, email, firstName, lastName } = req.body;
+      
+      const existing = await authStorage.getUserByUsername(username);
+      if (existing) {
+        return res.status(400).json({ message: "Пользователь уже существует" });
+      }
+
+      const user = await authStorage.createUser({
+        username,
+        password,
+        email,
+        firstName,
+        lastName,
+        id: Math.random().toString(36).substring(7)
+      });
+
+      (req.session as any).userId = user.id;
+      res.json(user);
+    } catch (e) {
+      console.error("Registration error:", e);
+      res.status(500).json({ message: "Ошибка сервера при регистрации" });
     }
-
-    const user = await authStorage.createUser({
-      username,
-      password,
-      email,
-      firstName,
-      lastName,
-      id: Math.random().toString(36).substring(7)
-    });
-
-    (req.session as any).userId = user.id;
-    res.json(user);
   });
 
   // Logout route
