@@ -21,7 +21,8 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   }));
@@ -81,7 +82,7 @@ export function setupAuth(app: Express) {
 
 export function registerAuthRoutes(app: Express) {
   app.get("/api/auth/user", async (req, res) => {
-    const userId = (req.session as any).userId;
+    const userId = req.session ? (req.session as any).userId : null;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
     
     const user = await authStorage.getUser(userId);
@@ -92,7 +93,7 @@ export function registerAuthRoutes(app: Express) {
 }
 
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  if (!(req.session as any).userId) {
+  if (!req.session || !(req.session as any).userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   next();
