@@ -1,16 +1,39 @@
-# Local Development Configuration
+# Локальная настройка проекта (Russian)
 
-## Database
-- Use pgAdmin to create a database named `webprog`
-- Connection string: `postgresql://postgres:postgres@localhost:5433/webprog`
-- Set `DATABASE_URL` environment variable to this string.
+## 1. Требования
+- **Node.js**: версия 18 или выше.
+- **PostgreSQL**: установленный и запущенный (через pgAdmin или как сервис).
 
-## Environment Variables
-- `DATABASE_URL`: `postgresql://postgres:postgres@localhost:5433/webprog`
-- `SESSION_SECRET`: any random string
-- `NODE_ENV`: `development`
+## 2. Настройка базы данных
+- Откройте pgAdmin.
+- Создайте новую базу данных с названием `webprog`.
+- Убедитесь, что порт указан `5433` (или измените в строке подключения ниже).
+- Пользователь: `postgres`, пароль: `postgres` (стандартный).
 
-## Commands
-- Install dependencies: `npm install`
-- Push schema: `npm run db:push`
-- Start dev server: `npm run dev` (runs on port 5000)
+## 3. Переменные окружения (.env)
+Создайте файл `.env` в корне проекта и добавьте следующие строки:
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/webprog
+SESSION_SECRET=your_random_secret_here
+NODE_ENV=development
+PORT=5000
+```
+
+## 4. Установка и запуск
+1. Откройте терминал в папке проекта.
+2. Установите зависимости:
+   ```bash
+   npm install
+   ```
+3. Создайте таблицы в базе данных:
+   ```bash
+   npm run db:push
+   ```
+4. Запустите сервер разработки:
+   ```bash
+   npm run dev
+   ```
+
+## 5. Использование
+- Сайт будет доступен по адресу: [http://localhost:5000](http://localhost:5000)
+- API эндпоинты начинаются с `/api`

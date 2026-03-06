@@ -58,13 +58,22 @@ export default function Checkout() {
           title: "Заказ успешно оформлен",
           description: "Мы свяжемся с вами в ближайшее время.",
         });
+        setLocation("/profile"); // Added redirect here
       },
-      onError: (err) => {
+      onError: (err: any) => {
+        const message = err.status === 401 
+          ? "Пожалуйста, войдите в аккаунт для оформления заказа." 
+          : (err.message || "Не удалось оформить заказ. Попробуйте позже.");
+        
         toast({
           title: "Ошибка",
-          description: err.message || "Не удалось оформить заказ. Попробуйте позже.",
+          description: message,
           variant: "destructive"
         });
+        
+        if (err.status === 401) {
+          setLocation("/auth");
+        }
       }
     });
   };
