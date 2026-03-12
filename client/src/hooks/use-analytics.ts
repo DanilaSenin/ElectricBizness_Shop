@@ -6,7 +6,7 @@ export function useAnalytics() {
   const [location] = useLocation();
 
   useEffect(() => {
-    // Log page view whenever location changes
+
     const logPageView = async () => {
       try {
         await apiRequest("POST", "/api/analytics", {
@@ -15,7 +15,7 @@ export function useAnalytics() {
           metadata: JSON.stringify({ referrer: document.referrer, userAgent: navigator.userAgent })
         });
       } catch (e) {
-        // Silently fail analytics
+
       }
     };
 
@@ -30,7 +30,7 @@ export function useAnalytics() {
         metadata: metadata ? JSON.stringify(metadata) : undefined
       });
     } catch (e) {
-      // Silently fail analytics
+
     }
   };
 

@@ -20,35 +20,54 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+// Компонент страницы каталога товаров
 export default function Catalog() {
+  // Состояние поисковой строки
   const [search, setSearch] = useState("");
+
+  // Состояние выбранной категории
   const [category, setCategory] = useState<string>("");
+
+  // Состояние выбранного способа сортировки
   const [sortBy, setSortBy] = useState<string>("");
 
+  // Получаем список товаров с учётом фильтров и сортировки
   const { data: products, isLoading } = useProducts({
+    // Если поиск пустой, передаём undefined, чтобы не применять фильтр
     search: search || undefined,
+
+    // Категория передаётся только если выбрано конкретное значение, кроме "all"
     category: category && category !== "all" ? category : undefined,
+
+    // Если сортировка не выбрана, параметр не передаётся
     sortBy: sortBy || undefined,
   });
 
-  // Extract unique categories from products if available, or hardcode common ones
+  // Список доступных категорий
+  // Здесь можно было бы получать уникальные категории с сервера,
+  // но в данном случае используется заранее заданный список
   const categories = ["all", "Электроника", "Одежда", "Дом", "Аксессуары"];
 
+  // Вспомогательный компонент боковой панели фильтров
   const FilterSidebar = () => (
     <div className="space-y-8">
       <div>
         <h3 className="font-display font-semibold text-lg mb-4">Категории</h3>
+
+        {/* Список кнопок выбора категории */}
         <div className="space-y-2">
           {categories.map((cat) => (
             <button
               key={cat}
+              // При нажатии устанавливаем выбранную категорию
               onClick={() => setCategory(cat)}
-              className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                (category === cat || (category === "" && cat === "all"))
+              // Активная категория подсвечивается отдельным стилем
+              className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${(category === cat || (category === "" && cat === "all"))
                   ? "bg-primary text-primary-foreground font-medium"
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
+              {/* Для значения "all" выводим более понятный текст */}
               {cat === "all" ? "Все категории" : cat}
             </button>
           ))}
@@ -59,29 +78,40 @@ export default function Catalog() {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Заголовок страницы каталога */}
       <div className="mb-8 md:mb-12">
-        <h1 className="font-display text-4xl font-bold text-foreground mb-4">Каталог товаров</h1>
-        <p className="text-muted-foreground text-lg">Найдите именно то, что вам нужно.</p>
+        <h1 className="font-display text-4xl font-bold text-foreground mb-4">
+          Каталог товаров
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Найдите именно то, что вам нужно.
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Mobile Filters Trigger */}
+        {/* Блок фильтров и поиска для мобильной версии */}
         <div className="w-full flex items-center gap-4 md:hidden">
+          {/* Поле поиска */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input 
-              placeholder="Поиск..." 
+            <Input
+              placeholder="Поиск..."
               className="pl-10 h-12 bg-muted/50 border-0"
               value={search}
+              // Обновляем состояние поиска при вводе текста
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
+          {/* Кнопка открытия боковой панели фильтров на мобильных устройствах */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="h-12 w-12 shrink-0">
                 <SlidersHorizontal className="h-5 w-5" />
               </Button>
             </SheetTrigger>
+
+            {/* Выезжающая панель с фильтрами */}
             <SheetContent side="right">
               <SheetHeader className="mb-6">
                 <SheetTitle>Фильтры</SheetTitle>
@@ -91,25 +121,31 @@ export default function Catalog() {
           </Sheet>
         </div>
 
-        {/* Desktop Sidebar */}
+        {/* Боковая панель фильтров для десктопной версии */}
         <div className="hidden md:block w-64 shrink-0 space-y-8 sticky top-24">
           <FilterSidebar />
         </div>
 
-        {/* Main Content */}
+        {/* Основной блок содержимого каталога */}
         <div className="flex-1 w-full space-y-6">
-          {/* Top Bar */}
+          {/* Верхняя панель с поиском и сортировкой для десктопа */}
           <div className="hidden md:flex items-center gap-4 bg-card p-2 rounded-xl border border-border/50 shadow-sm">
+            {/* Поле поиска */}
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                placeholder="Поиск товаров..." 
+              <Input
+                placeholder="Поиск товаров..."
                 className="pl-10 h-10 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                 value={search}
+                // Обновляем поисковый запрос
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            {/* Вертикальный разделитель */}
             <div className="h-6 w-px bg-border/50 mx-2"></div>
+
+            {/* Выпадающий список сортировки */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[200px] h-10 border-0 bg-transparent focus:ring-0">
                 <SelectValue placeholder="Сортировка" />
@@ -122,35 +158,56 @@ export default function Catalog() {
             </Select>
           </div>
 
-          {/* Product Grid */}
+          {/* Если данные ещё загружаются, показываем скелетоны */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="space-y-4">
+                  {/* Заглушка под изображение */}
                   <Skeleton className="aspect-square rounded-2xl w-full" />
+
+                  {/* Заглушка под категорию */}
                   <Skeleton className="h-4 w-1/3" />
+
+                  {/* Заглушка под название */}
                   <Skeleton className="h-6 w-3/4" />
+
+                  {/* Заглушка под цену */}
                   <Skeleton className="h-6 w-1/4" />
                 </div>
               ))}
             </div>
           ) : products && products.length > 0 ? (
+            // Если товары найдены, отображаем сетку карточек товаров
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
+            // Если товаров по заданным параметрам не найдено, показываем пустое состояние
             <div className="text-center py-24 bg-card rounded-2xl border border-dashed">
               <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="font-display font-semibold text-xl mb-2">Ничего не найдено</h3>
-              <p className="text-muted-foreground">Попробуйте изменить параметры поиска или фильтры.</p>
-              <Button 
-                variant="outline" 
+
+              <h3 className="font-display font-semibold text-xl mb-2">
+                Ничего не найдено
+              </h3>
+
+              <p className="text-muted-foreground">
+                Попробуйте изменить параметры поиска или фильтры.
+              </p>
+
+              {/* Кнопка сброса всех фильтров */}
+              <Button
+                variant="outline"
                 className="mt-6"
-                onClick={() => { setSearch(""); setCategory(""); setSortBy(""); }}
+                onClick={() => {
+                  setSearch("");
+                  setCategory("");
+                  setSortBy("");
+                }}
               >
                 Сбросить фильтры
               </Button>
