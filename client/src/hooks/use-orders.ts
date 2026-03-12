@@ -1,3 +1,5 @@
+//Заказы
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, type OrderInput } from "@shared/routes";
 import { isUnauthorizedError } from "@/lib/auth-utils";
@@ -20,7 +22,7 @@ export function useOrders() {
 
 export function useCreateOrder() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: OrderInput) => {
       const validated = api.orders.create.input.parse(data);
@@ -30,7 +32,7 @@ export function useCreateOrder() {
         body: JSON.stringify(validated),
         credentials: "include",
       });
-      
+
       if (res.status === 401) throw new Error('401: Unauthorized');
       if (!res.ok) {
         if (res.status === 400) {

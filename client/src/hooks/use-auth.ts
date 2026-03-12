@@ -1,10 +1,15 @@
+//Аутентификация
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/models/auth";
 import { apiRequest } from "@/lib/queryClient";
+import { useCart } from "@/hooks/use-cart";
+import { useCookieBanner } from "@/hooks/use-cookie-banner";
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  
+  const showCookieBanner = useCookieBanner((state) => state.show);
+
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
@@ -25,7 +30,11 @@ export function useAuth() {
       return res.json();
     },
     onSuccess: (user) => {
+      useCart.getState().clearCart();
       queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/my-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      showCookieBanner();
     },
   });
 
@@ -35,7 +44,11 @@ export function useAuth() {
       return res.json();
     },
     onSuccess: (user) => {
+      useCart.getState().clearCart();
       queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/my-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      showCookieBanner();
     },
   });
 
@@ -44,7 +57,10 @@ export function useAuth() {
       await apiRequest("POST", "/api/logout", {});
     },
     onSuccess: () => {
+      useCart.getState().clearCart();
       queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.removeQueries({ queryKey: ["/api/analytics/my-stats"] });
+      queryClient.removeQueries({ queryKey: ["/api/orders"] });
     },
   });
 

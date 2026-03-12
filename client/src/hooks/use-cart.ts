@@ -1,3 +1,5 @@
+//Корзина
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Product } from '@shared/schema';
